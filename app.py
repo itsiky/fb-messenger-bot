@@ -39,10 +39,8 @@ UNKNOWN_REQ = os.environ.get('UNKNOWN_REQ')
 debug(True)
 app = Bottle()
 
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 # Facebook Messenger GET Webhook
 @app.get('/webhook')
@@ -67,29 +65,26 @@ def messenger_post():
     Handler for webhook (currently for postback and messages)
     """
     data = request.json
-    print('+++ The json recieved : ')
-    #log(data)
-
     unknowreq = os.environ.get('UNKNOWN_REQ')
 
-    property = getattr(data,"text",None)
-    if property is not None :
-        print ('++++ Propery value :' , property)
-
-    print ('++++ Propery value :' , property)
+    print("+++ Recieved message from user ", data)
 
     if data["object"] == "page":
 
         for entry in data["entry"]:
             for messaging_event in entry["messaging"]:
-                if messaging_event.get("message"):  # someone sent us a message
-                    try:
-                        sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
+                sender_id = messaging_event["sender"]["id"]  # the facebook ID of the person sending you the message
+                if messaging_event.get('message') and messaging_event['message'].get('text'):  # someone sent us a message
                         recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
                         message_text = messaging_event["message"]["text"]  # the message's text
                         client.run_actions(session_id=sender_id, message=message_text)
-                    except:
-                        fb_message(sender_id, unknowreq) # unknown request recieved from user
+                else:
+                    fb_message(sender_id, unknowreq) # unknown request recieved from user
+
+                if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
+                        pring ("++++ Recieved postback")
+                        recipient_id = messaging_event["recipient"]["id"]
+                        postback = messaging_event["postback"].get("payload")
 
                 if messaging_event.get("delivery"):  # delivery confirmation
                     pass
@@ -97,8 +92,7 @@ def messenger_post():
                 if messaging_event.get("optin"):  # optin confirmation
                     pass
 
-                if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                    pass
+
 
                 return None
 
@@ -106,6 +100,7 @@ def fb_message(sender_id, text):
     """
     Function for returning response to messenger
     """
+    print ('++++ in fb_message function ', text)
     params = {
         "access_token": os.environ["FB_PAGE_TOKEN"]
     }
@@ -123,7 +118,75 @@ def fb_message(sender_id, text):
         }
     })
 
-    resp = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=msgdata)
+    print(">>> Message sent: ", msgdata)
+
+    # call facebook messenger api
+    invokeFBapi(params, headers, msgdata)
+
+
+def buildresponse(sender_id, response):
+    """
+    buildresponse function
+    """
+
+    print('++++ in buildresponse func - quickreplies Response :',  response['text'].decode('UTF-8') + '\nQR: ' + ', '.join(response['quickreplies']))
+    print(">>> Opciones: {}".format(response['quickreplies']))
+
+    text = response['text']
+    msgdata = {}
+    recipient = {};
+    message = {}
+    recipient["id"] = sender_id;
+
+    message["text"] = response['text']
+    message["quickreplies"] = json.dumps(response['quickreplies'])
+
+    msgdata["recipient"] = recipient
+    msgdata["message"] = message
+
+    print (">>> Message msgdata", json.dumps(msgdata))
+
+    params = {
+        "access_token": os.environ["FB_PAGE_TOKEN"]
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    msgdata2 = json.dumps({
+        "recipient": {
+            "id": sender_id
+        },
+        "message":{
+        "text":text,
+        "quick_replies":[
+          {
+            "content_type":"text",
+            "title":"כן",
+            "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_YES"
+          },
+          {
+            "content_type":"text",
+            "title":"לא",
+            "payload":"DEVELOPER_DEFINED_PAYLOAD_FOR_PICKING_NO"
+          }
+        ]
+      }
+    })
+
+    print (">>> Message msgdata2", msgdata2)
+
+    invokeFBapi(params, headers, msgdata2)
+
+
+
+def invokeFBapi(params, headers, data):
+    """
+    Facebook messenger api callback invoke
+    """
+
+    resp = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers , data=data)
 
     if resp.status_code != 200:
         log(resp.status_code)
@@ -132,30 +195,34 @@ def fb_message(sender_id, text):
     return resp.content
 
 
+
+
 def send(request, response):
     """
     Sender function
     """
-    # We use the fb_id as equal to session_id
     fb_id = request['session_id']
-    text = response['text']
 
-    #print('++++ Received from user...', request['text'])
-    #print('++++ Sending to user...', response['text'])
-    # send message
-    fb_message(fb_id, text)
+    if response['quickreplies']:
+        buildresponse(fb_id, response)
+    else:
+        text = response['text']
+        fb_message(fb_id, text)
 
 def log(messages):  # simple wrapper for logging to stdout on heroku
     print str(messages)
 
 
-# Setup Actions
+# Setup Actions for Wit
 actions = {
     'send': send
 }
 
 # Setup Wit Client
 client = Wit(access_token=WIT_TOKEN, actions=actions)
+
+# set logger level for Wit.ai client
+client.logger.setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
     # Run Server

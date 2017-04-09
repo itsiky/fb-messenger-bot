@@ -200,8 +200,6 @@ def getLocation(request, response):
     """
     fb_id = request['session_id']
     print("+++ getLocation fnction invoked")
-    
-
 
 
 def send(request, response):

@@ -198,8 +198,16 @@ def getLocation(request):
     """
     get location function
     """
+    context = request['context']
+    entities = request['entities']
+
+    context['forecast'] = 'sunny'
+
     fb_id = request['session_id']
     print("+++ getLocation fnction invoked")
+
+    return context
+
 
 
 def send(request, response):

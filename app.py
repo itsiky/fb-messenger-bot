@@ -194,7 +194,7 @@ def invokeFBapi(params, headers, data):
 
     return resp.content
 
-def getLocation(request, response):
+def getLocation(request):
     """
     get location function
     """

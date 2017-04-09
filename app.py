@@ -67,7 +67,7 @@ def messenger_post():
     data = request.json
     unknowreq = os.environ.get('UNKNOWN_REQ')
 
-    print("+++ Recieved message from user ", data)
+    # print("+++ Recieved message from user ", data)
 
     if data["object"] == "page":
 
@@ -100,7 +100,7 @@ def fb_message(sender_id, text):
     """
     Function for returning response to messenger
     """
-    print ('++++ in fb_message function ', text)
+    # print ('++++ in fb_message function ', text)
     params = {
         "access_token": os.environ["FB_PAGE_TOKEN"]
     }
@@ -118,7 +118,7 @@ def fb_message(sender_id, text):
         }
     })
 
-    print(">>> Message sent: ", msgdata)
+    # print(">>> Message sent: ", msgdata)
 
     # call facebook messenger api
     invokeFBapi(params, headers, msgdata)
@@ -129,8 +129,8 @@ def buildresponse(sender_id, response):
     buildresponse function
     """
 
-    print('++++ in buildresponse func - quickreplies Response :',  response['text'].decode('UTF-8') + '\nQR: ' + ', '.join(response['quickreplies']))
-    print(">>> Opciones: {}".format(response['quickreplies']))
+    # print('++++ in buildresponse func - quickreplies Response :',  response['text'].decode('UTF-8') + '\nQR: ' + ', '.join(response['quickreplies']))
+    # print(">>> Opciones: {}".format(response['quickreplies']))
 
     text = response['text']
     msgdata = {}
@@ -144,7 +144,7 @@ def buildresponse(sender_id, response):
     msgdata["recipient"] = recipient
     msgdata["message"] = message
 
-    print (">>> Message msgdata", json.dumps(msgdata))
+    # print (">>> Message msgdata", json.dumps(msgdata))
 
     params = {
         "access_token": os.environ["FB_PAGE_TOKEN"]
@@ -175,7 +175,7 @@ def buildresponse(sender_id, response):
       }
     })
 
-    print (">>> Message msgdata2", msgdata2)
+    # print (">>> Message msgdata2", msgdata2)
 
     invokeFBapi(params, headers, msgdata2)
 
@@ -193,8 +193,6 @@ def invokeFBapi(params, headers, data):
         log(resp.text)
 
     return resp.content
-
-
 
 
 def send(request, response):

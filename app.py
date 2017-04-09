@@ -82,7 +82,7 @@ def messenger_post():
                     fb_message(sender_id, unknowreq) # unknown request recieved from user
 
                 if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                        pring ("++++ Recieved postback")
+                        # pring ("++++ Recieved postback")
                         recipient_id = messaging_event["recipient"]["id"]
                         postback = messaging_event["postback"].get("payload")
 
@@ -194,6 +194,15 @@ def invokeFBapi(params, headers, data):
 
     return resp.content
 
+def getLocation(request, response):
+    """
+    get location function
+    """
+    fb_id = request['session_id']
+    print("+++ getLocation fnction invoked")
+    
+
+
 
 def send(request, response):
     """
@@ -213,7 +222,8 @@ def log(messages):  # simple wrapper for logging to stdout on heroku
 
 # Setup Actions for Wit
 actions = {
-    'send': send
+    'send': send,
+    'getLocation': getLocation,
 }
 
 # Setup Wit Client

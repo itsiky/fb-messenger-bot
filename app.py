@@ -228,8 +228,9 @@ def log(messages):  # simple wrapper for logging to stdout on heroku
 
 # Setup Actions for Wit
 actions = {
-    'send': send,
-    'getLocation': getLocation,
+    'send': send
+    # ,
+    # 'getLocation': getLocation,
 }
 
 # Setup Wit Client
